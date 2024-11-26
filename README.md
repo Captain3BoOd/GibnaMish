@@ -38,7 +38,7 @@ To build GibnaMish, follow these steps:
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/abo154/GibnaMish.git
+    git clone https://github.com/Captain3BoOd/GibnaMish.git
     cd GibnaMish
     ```
 
