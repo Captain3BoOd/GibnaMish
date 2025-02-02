@@ -1,4 +1,4 @@
-#include "../Headers/threadmanager.hpp"
+#include "threadmanager.hpp"
 
 SearchInstance::SearchInstance():
     search(std::make_unique<Searcher>())

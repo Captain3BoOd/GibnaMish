@@ -1,7 +1,7 @@
 #include <cmath>
 #include <algorithm>
 
-#include "../Headers/time.hpp"
+#include "time.hpp"
 
 bool Timer::useMaxThinkTime = false;
 int Timer::maxThinkTimeMs = 2500;

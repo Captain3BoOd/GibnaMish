@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "Headers/uci.hpp"
+#include "uci.hpp"
 
 TranspositionTable tt;
 ThreadPool Threads;

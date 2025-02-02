@@ -1,4 +1,4 @@
-#include "../Headers/piecesbouns.hpp"
+#include "piecesbouns.hpp"
 
 constexpr void piecesbouns::Reverse_Copy(int sarr[], const int arr[], const int size)
 {

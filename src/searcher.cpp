@@ -2,12 +2,12 @@
 #include <limits>
 #include <cmath>
 
-#include "../Headers/see.hpp"
-#include "../Headers/searcher.hpp"
-#include "../Headers/movepick.hpp"
-#include "../Headers/piecesbouns.hpp"
-#include "../Headers/threadmanager.hpp"
-#include "../Headers/transpositiontable.hpp"
+#include "see.hpp"
+#include "searcher.hpp"
+#include "movepick.hpp"
+#include "piecesbouns.hpp"
+#include "threadmanager.hpp"
+#include "transpositiontable.hpp"
 
 extern TranspositionTable tt;
 extern ThreadPool Threads;

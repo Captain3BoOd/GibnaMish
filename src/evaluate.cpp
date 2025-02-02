@@ -1,5 +1,5 @@
-#include "../Headers/evaluate.hpp"
-#include "../Headers/piecesbouns.hpp"
+#include "evaluate.hpp"
+#include "piecesbouns.hpp"
 
 Score Evaluate::evaluate(const chess::Board& Board)
 {

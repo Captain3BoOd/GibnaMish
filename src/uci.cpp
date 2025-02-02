@@ -1,9 +1,9 @@
 #include <iostream>
 #include <utility>
 
-#include "../Headers/uci.hpp"
-#include "../Headers/options.hpp"
-#include "../Headers/str_utils.hpp"
+#include "uci.hpp"
+#include "options.hpp"
+#include "str_utils.hpp"
 
 constexpr uint64_t UCI_MAX_HASH_MB = static_cast<uint64_t>(TranspositionTable::MAXHASH_MiB * (1024 * 1024) / (1e6));
 extern TranspositionTable tt;

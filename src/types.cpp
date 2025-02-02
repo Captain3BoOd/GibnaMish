@@ -1,4 +1,4 @@
-#include "../Headers/types.hpp"
+#include "types.hpp"
 
 bool is_checkmate(const chess::Board& Board, const bool is_moves_empty)
 {

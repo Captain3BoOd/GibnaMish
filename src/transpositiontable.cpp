@@ -1,6 +1,6 @@
 #include <cmath>
 
-#include "../Headers/transpositiontable.hpp"
+#include "transpositiontable.hpp"
 
 TranspositionTable::TranspositionTable():
 	currentAge(0)
