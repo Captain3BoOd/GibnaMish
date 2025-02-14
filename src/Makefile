@@ -10,14 +10,25 @@ else
 	TARGET = -march=native
 endif
 
-CFLAGS = -Wall -std=c++20 -static -O3 -DNDEBUG -mtune=native -Wcast-qual -static-libgcc -static-libstdc++ -pie -lm -fno-exceptions -fno-rtti -Wextra -Wno-unused-variable -Wno-unused-result -Wno-unused-but-set-variable -Wno-maybe-uninitialized -pedantic -funroll-loops -fPIC -flto
+CXX ?= g++
+CXXFLAGS = -Wall -std=c++20 -static -O3 -DNDEBUG -mtune=native -Wcast-qual -lm -fno-exceptions -fno-rtti -Wextra -Wno-unused-variable -Wno-unused-result -Wno-unused-but-set-variable -Wno-maybe-uninitialized -pedantic -funroll-loops -flto
+
+ifneq ($(findstring clang++,$(CXX)),)
+	ifeq ($(uname_S), Windows)
+		# CXXFLAGS +=
+	else
+		CXXFLAGS += -fPIC -lm -pie
+	endif
+else ifneq ($(findstring g++,$(CXX)),)
+	CXXFLAGS += -static-libgcc -static-libstdc++ -pie
+endif
 
 OBJ_DIR := obj
 SRCS := $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(notdir $(SRCS)))
 
 GibnaMish: $(OBJ_DIR) $(OBJS)
-	g++ -o GibnaMish $(OBJS) $(CFLAGS)
+	$(CXX) -o GibnaMish $(OBJS) $(CXXFLAGS)
 ifeq ($(OS), Windows_NT)
 	-rmdir /S /Q $(OBJ_DIR)
 else
@@ -32,7 +43,7 @@ else
 endif
 
 $(OBJ_DIR)/%.o: %.cpp
-	g++ -c $(CFLAGS) -flto $(TARGET) -std=c++20 -Wall $< -o $@
+	$(CXX) -c $(CXXFLAGS) -flto $(TARGET) -std=c++20 -Wall $< -o $@
 
 clean:
 ifeq ($(OS), Windows_NT)
