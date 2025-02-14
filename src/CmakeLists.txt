@@ -1,0 +1,58 @@
+cmake_minimum_required(VERSION 3.20)
+project(GibnaMish VERSION 1.0)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported OUTPUT error)
+if(ipo_supported)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+
+file(GLOB SRCS *.cpp)
+add_executable(GibnaMish ${SRCS})
+
+target_compile_options(GibnaMish PRIVATE
+    -Wall
+    -O3
+    -DNDEBUG
+    -Wcast-qual
+    -fno-exceptions
+    -fno-rtti
+    -Wextra
+    -Wno-unused-variable
+    -Wno-unused-result
+    -Wno-unused-but-set-variable
+    -Wno-maybe-uninitialized
+    -pedantic
+    -funroll-loops
+    -fPIC
+    -flto
+)
+
+if(APPLE)
+    target_compile_options(GibnaMish PRIVATE -mcpu=apple-a14)
+else()
+    target_compile_options(GibnaMish PRIVATE -march=native -mtune=native)
+endif()
+
+
+if(WIN32)
+    target_link_options(GibnaMish PRIVATE
+        -static
+        -static-libgcc
+        -static-libstdc++
+        -pie
+        -lm
+        -flto
+    )
+else()
+    target_link_options(GibnaMish PRIVATE
+        -static
+        -pie
+        -lm
+        -flto
+    )
+endif()
