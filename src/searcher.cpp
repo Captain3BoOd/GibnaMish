@@ -35,10 +35,7 @@ Searcher::Searcher(const chess::Board& Board):
 	id(0),
 	silent(false),
 	use_tb(false)
-{
-	piecesbouns::init_pieces_bouns();
-	init_reductions();
-}
+{}
 
 template <Searcher::NodeType node>
 MoveValue Searcher::ABSearch(Depth depth, Score alpha, Score beta, const bool is_max, Stack* ss)

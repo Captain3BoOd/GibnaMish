@@ -5,6 +5,8 @@
 #include "time.hpp"
 #include "threadmanager.hpp"
 
+void init_reductions();
+
 class UCI
 {
 public:
