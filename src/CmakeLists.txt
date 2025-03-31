@@ -22,13 +22,8 @@ target_compile_options(GibnaMish PRIVATE
     -fno-exceptions
     -fno-rtti
     -Wextra
-    -Wno-unused-variable
-    -Wno-unused-result
-    -Wno-unused-but-set-variable
-    -Wno-maybe-uninitialized
     -pedantic
     -funroll-loops
-    -fPIC
     -flto
 )
 
@@ -38,21 +33,10 @@ else()
     target_compile_options(GibnaMish PRIVATE -march=native -mtune=native)
 endif()
 
-
-if(WIN32)
-    target_link_options(GibnaMish PRIVATE
-        -static
-        -static-libgcc
-        -static-libstdc++
-        -pie
-        -lm
-        -flto
-    )
-else()
-    target_link_options(GibnaMish PRIVATE
-        -static
-        -pie
-        -lm
-        -flto
-    )
-endif()
+target_link_options(GibnaMish PRIVATE
+    -Wl,--no-as-needed
+    -pthread
+    -lstdc++
+    -static
+    -flto
+)

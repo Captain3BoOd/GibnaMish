@@ -7,28 +7,19 @@ endif
 ifeq ($(uname_S), Darwin)
 	TARGET = -mcpu=apple-a14
 else
-	TARGET = -march=native
+	TARGET = -mtune=native
 endif
 
-CXX ?= g++
-CXXFLAGS = -Wall -std=c++20 -static -O3 -DNDEBUG -mtune=native -Wcast-qual -lm -fno-exceptions -fno-rtti -Wextra -Wno-unused-variable -Wno-unused-result -Wno-unused-but-set-variable -Wno-maybe-uninitialized -pedantic -funroll-loops -flto
-
-ifneq ($(findstring clang++,$(CXX)),)
-	ifeq ($(uname_S), Windows)
-		# CXXFLAGS +=
-	else
-		CXXFLAGS += -fPIC -lm -pie
-	endif
-else ifneq ($(findstring g++,$(CXX)),)
-	CXXFLAGS += -static-libgcc -static-libstdc++ -pie
-endif
+CXX = g++
+CXXFLAGS = -std=c++20 -static -O3 -DNDEBUG -Wall -Wcast-qual -fno-exceptions -fno-rtti -Wextra -pedantic -funroll-loops -flto
+LDFLAGS = -flto -pthread -lstdc++ -static -Wl,--no-as-needed
 
 OBJ_DIR := obj
 SRCS := $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(notdir $(SRCS)))
 
 GibnaMish: $(OBJ_DIR) $(OBJS)
-	$(CXX) -o GibnaMish $(OBJS) $(CXXFLAGS)
+	$(CXX) -o GibnaMish $(OBJS) $(CXXFLAGS) $(LDFLAGS)
 ifeq ($(OS), Windows_NT)
 	-rmdir /S /Q $(OBJ_DIR)
 else
