@@ -51,17 +51,15 @@ private:
 private:
 	enum Biases : int16_t
 	{
-		STANDARD = 10,
+		STANDARD = 3000,
 
-		TTBias = 50 * STANDARD,
-		winningCaptureBias = 5 * STANDARD,
-		promoteBias = 4 * STANDARD,
-		killerBias = 3 * STANDARD,
-		counterBias = 2 * STANDARD,
-		losingCaptureBias = 1 * STANDARD,
-		regularBias = 0 * STANDARD,
+		TTBias = 10 * STANDARD,
+		CaptureBias = 7 * STANDARD,
+		killerBias = 6 * STANDARD,
+		counterBias = 4 * STANDARD,
 		negativeBias = -1 * TTBias
 	};
+
 	const Searcher& searcher;
 	const Stack* ss;
 	Movelist& moves;
@@ -77,6 +75,9 @@ MovePicker<st>::MovePicker(const Searcher& searcher, const Stack* ss, Movelist& 
 	moves(moves),
 	tt_move(tt_move)
 {
+	this->moves.clear();
+	chess::movegen::legalmoves<chess::movegen::MoveGenType::CAPTURE>(this->moves, this->searcher.Board);
+
 	this->score_moves();
 }
 
@@ -89,19 +90,27 @@ MovePicker<st>::MovePicker(const Searcher& searcher, const Stack* ss, Movelist& 
 	moves(moves),
 	tt_move(tt_move)
 {
-	if (root_node && searchmoves.size() > 0) this->moves = searchmoves;
+	if (root_node && searchmoves.size() > 0)
+	{
+		this->moves = searchmoves;
+		return;
+	}
+
+	this->moves.clear();
+	chess::movegen::legalmoves(this->moves, this->searcher.Board);
+
 	this->score_moves();
 }
 
 template<SearchType st>
 int16_t MovePicker<st>::score_move(const Move move)
 {
-	if constexpr(st == QSEARCH) return winningCaptureBias + this->mvvlva(move);
+	if constexpr(st == QSEARCH) return CaptureBias + this->mvvlva(move);
 
 	if (move == this->tt_move) return Biases::TTBias;
 
 	if (this->searcher.Board.at(move.to()) != Piece::NONE)
-		return ((see::see(this->searcher.Board, move, 0) ? winningCaptureBias : losingCaptureBias) + mvvlva(move));
+		return ((see::see(this->searcher.Board, move, 0) ? CaptureBias : 0) + mvvlva(move));
 
 	const bool isKiller = history::get<HistoryType::KILLER>(this->searcher, move, this->ss).Match(move);
 	const bool isCounter = history::get<HistoryType::COUNTER>(this->searcher, move, this->ss) == move;
@@ -109,9 +118,6 @@ int16_t MovePicker<st>::score_move(const Move move)
 	if (isKiller) return Biases::killerBias;
 	else if (isCounter) return Biases::counterBias;
 
-	// if (move.typeOf() == Move::PROMOTION)
-	// 	if (move.promotionType() == PieceType::QUEEN)
-	// 		Score += Biases::promoteBias;
 	return history::get<HistoryType::HISTORY>(this->searcher, move, this->ss);
 }
 

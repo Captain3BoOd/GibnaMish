@@ -38,25 +38,32 @@ Searcher::Searcher(const chess::Board& Board):
 {}
 
 template <Searcher::NodeType node>
-MoveValue Searcher::ABSearch(Depth depth, Score alpha, Score beta, const bool is_max, Stack* ss)
+MoveValue Searcher::ABSearch(Depth depth, Score alpha, Score beta, Stack* ss)
 {
-	Movelist moves;
-	movegen::legalmoves(moves, this->Board);
+	const bool in_check = this->Board.inCheck();
+	const Color color = this->Board.sideToMove();
 
+	if (ss->ply > MAX_PLY - 1) return { Move::NO_MOVE, (!in_check? Evaluate::evaluate(this->Board) : 0) };
 	this->pv_length[ss->ply] = ss->ply;
 
-	if (is_Draw(this->Board, moves.empty())) return { Move::NO_MOVE, 0 };
-	if (is_checkmate(this->Board, moves.empty())) return { Move::NO_MOVE, -VALUE_MATE + ss->ply };
-
-	const bool in_check = this->Board.inCheck();
 	constexpr bool PvNode = node != NONPV;
 	constexpr bool RootNode = node == ROOT;
 
-	if (ss->ply > MAX_PLY - 1)
-		return { Move::NO_MOVE, (!in_check? ((is_max ? 1 : -1) * Evaluate::evaluate(this->Board)) : 0) };
+	// Draw and mate
+	if (!RootNode)
+	{
+		if (this->Board.isRepetition(1 + PvNode)) return { Move::NO_MOVE, -1 + (this->nodes & 0x2) };
+
+		const chess::GameResult result = this->Board.isGameOver().second;
+		if (result != chess::GameResult::NONE) return { Move::NO_MOVE, result == chess::GameResult::LOSE? matedIn(ss->ply) : 0 };
+
+		alpha = std::max(alpha, matedIn(ss->ply));
+		beta = std::min(beta, mateIn(ss->ply + 1));
+		if (alpha >= beta) return { Move::NO_MOVE, alpha };
+	}
 
 	if (in_check) depth++;
-	if (depth <= 0) return this->QSearch<node>(alpha, beta, is_max, ss);
+	if (depth <= 0) return this->QSearch<node>(alpha, beta, ss);
 
 	assert(-VALUE_INFINITE <= alpha && alpha < beta && beta <= VALUE_INFINITE);
 	assert(PvNode || (alpha == beta - 1));
@@ -98,7 +105,7 @@ MoveValue Searcher::ABSearch(Depth depth, Score alpha, Score beta, const bool is
 		ss->eval = VALUE_NONE;
 		goto startmoves;
 	}
-	ss->eval = tt_hit ? ttEval : (is_max ? 1 : -1) * Evaluate::evaluate(this->Board);
+	ss->eval = tt_hit ? ttEval : Evaluate::evaluate(this->Board);
 
 	// improving boolean
 	improving = (ss - 2)->eval != VALUE_NONE && ss->eval > (ss - 2)->eval;
@@ -108,7 +115,7 @@ MoveValue Searcher::ABSearch(Depth depth, Score alpha, Score beta, const bool is
 	// Start Internal Iterative Reductions (IIR)
 	if (depth >= 3 && !tt_hit) depth--;
 	if (PvNode && !tt_hit) depth--;
-	if (depth <= 0) return this->QSearch<PV>(alpha, beta, is_max, ss);
+	if (depth <= 0) return this->QSearch<PV>(alpha, beta, ss);
 	// End Internal Iterative Reductions (IIR)
 
 	// Skip early pruning in Pv Nodes
@@ -116,7 +123,7 @@ MoveValue Searcher::ABSearch(Depth depth, Score alpha, Score beta, const bool is
 
 	// Start Razoring
 	if (depth < 3 && ss->eval + 129 < alpha)
-		return this->QSearch<NONPV>(alpha, beta, is_max, ss);
+		return this->QSearch<NONPV>(alpha, beta, ss);
 	// End Razoring
 
 	// Start Null Move Pruning
@@ -131,7 +138,7 @@ MoveValue Searcher::ABSearch(Depth depth, Score alpha, Score beta, const bool is
 		(ss)->currentmove = Move::NULL_MOVE;
 
 		this->Board.makeNullMove();
-		Score null_score = -this->ABSearch<NONPV>(depth - r, -beta, -beta + 1, !is_max, ss + 1).second;
+		Score null_score = -this->ABSearch<NONPV>(depth - r, -beta, -beta + 1, ss + 1).second;
 		this->Board.unmakeNullMove();
 
 		if (null_score >= beta)
@@ -145,11 +152,13 @@ MoveValue Searcher::ABSearch(Depth depth, Score alpha, Score beta, const bool is
 	// End Null Move Pruning
 
 startmoves:
+	Movelist moves;
+	Move quiets[64];
+
 	MovePicker<ABSEARCH> mp(*this, ss, moves, this->searchmoves, RootNode, tt_hit? ttMove : Move::NO_MOVE);
 	ss->move_count = moves.size();
 
 	Move Final_Move = moves.empty() ? Move::NO_MOVE : moves[0];
-	Move quiets[64];
 	Score Final_Score = -VALUE_INFINITE;
 	Score score = VALUE_NONE;
 	bool do_full_search = false;
@@ -193,7 +202,7 @@ startmoves:
 			Score s_beta = ttEval - (54 + 76 * (!PvNode)) * depth / 64;
 
 			ss->excluded_move = move;
-			const Score s_value = this->ABSearch<NONPV>(s_depth, s_beta - 1, s_beta, !is_max, ss).second;
+			const Score s_value = this->ABSearch<NONPV>(s_depth, s_beta - 1, s_beta, ss).second;
 			ss->excluded_move = Move::NO_MOVE;
 
 			if (s_value < s_beta) extension = 1;
@@ -220,7 +229,7 @@ startmoves:
 			Depth rdepth = reductions[depth][madeMoves] - (PvNode + is_capture + (id % 2)) + improving;
 			rdepth = std::clamp(newDepth - rdepth, 1, newDepth + 1);
 
-			score = -this->ABSearch<NONPV>(rdepth, -alpha - 1, -alpha, !is_max, ss + 1).second;
+			score = -this->ABSearch<NONPV>(rdepth, -alpha - 1, -alpha, ss + 1).second;
 			do_full_search = score > alpha && rdepth < newDepth;
 		}
 		else
@@ -228,11 +237,11 @@ startmoves:
 
 		// do a full research if lmr failed or lmr was skipped
 		if (do_full_search)
-			score = -this->ABSearch<NONPV>(newDepth, -alpha - 1, -alpha, !is_max, ss + 1).second;
+			score = -this->ABSearch<NONPV>(newDepth, -alpha - 1, -alpha, ss + 1).second;
 
 		// PVS search
 		if (PvNode && ((score > alpha && score < beta) || madeMoves == 1))
-			score = -this->ABSearch<PV>(newDepth, -beta, -alpha, !is_max, ss + 1).second;
+			score = -this->ABSearch<PV>(newDepth, -beta, -alpha, ss + 1).second;
 		// End late move reduction and PVS search
 
 		this->Board.unmakeMove(move);
@@ -294,20 +303,23 @@ startmoves:
 }
 
 template <Searcher::NodeType node>
-MoveValue Searcher::QSearch(Score alpha, Score beta, const bool is_max, Stack* ss)
+MoveValue Searcher::QSearch(Score alpha, Score beta, Stack* ss)
 {
 	if (ss->ply > MAX_PLY - 1) return { Move::NO_MOVE, Evaluate::evaluate(this->Board) };
 	if (this->exit_early()) return { Move::NO_MOVE, 0 };
 
-	Movelist moves;
-	movegen::legalmoves<MoveGenType::CAPTURE>(moves, this->Board);
-	Move Final_Move = moves.empty() ? Move::NO_MOVE : moves[0];
-
 	constexpr bool PvNode = node == PV;
 	const bool in_check = this->Board.inCheck();
+	const Color color = this->Board.sideToMove();
 
 	assert(alpha >= -VALUE_INFINITE && alpha < beta && beta <= VALUE_INFINITE);
 	assert(PvNode || (alpha == beta - 1));
+
+	// Draw and mate
+	if (this->Board.isRepetition(1 + PvNode)) return { Move::NO_MOVE, -1 + (nodes & 0x2) };
+	const chess::GameResult result = this->Board.isGameOver().second;
+	if (result != chess::GameResult::NONE) return { Move::NO_MOVE, result == chess::GameResult::LOSE ? matedIn(ss->ply) : 0 };
+
 
 	auto [tt_entry, ttMove, tt_hit] = tt.probe(this->Board.zobrist());
 	const Score ttEval = tt_hit? score_from_tt(tt_entry->value, ss->ply) : Score(VALUE_NONE);
@@ -332,7 +344,9 @@ MoveValue Searcher::QSearch(Score alpha, Score beta, const bool is_max, Stack* s
 	if (Final_Score >= beta) return { Move::NO_MOVE, Final_Score };
 	if (Final_Score > alpha) alpha = Final_Score;
 
+	Movelist moves;
 	MovePicker<QSEARCH> mp(*this, ss, moves, ttMove);
+	Move Final_Move = moves.empty() ? Move::NO_MOVE : moves[0];
 
 	Move move = Move::NO_MOVE;
 	while ((move = mp.nextMove()) != Move::NO_MOVE)
@@ -359,7 +373,7 @@ MoveValue Searcher::QSearch(Score alpha, Score beta, const bool is_max, Stack* s
 		this->nodes++;
 
 		this->Board.makeMove(move);
-		Score score = -this->QSearch<node>(-beta, -alpha, !is_max, ss + 1).second;
+		Score score = -this->QSearch<node>(-beta, -alpha, ss + 1).second;
 		this->Board.unmakeMove(move);
 
 		assert(score > -VALUE_INFINITE && score < VALUE_INFINITE);
@@ -390,7 +404,7 @@ MoveValue Searcher::QSearch(Score alpha, Score beta, const bool is_max, Stack* s
 	return { Final_Move, Final_Score };
 }
 
-MoveValue Searcher::ASearch(const Depth depth, const bool is_max, const MoveValue prev_eval, Stack* ss)
+MoveValue Searcher::ASearch(const Depth depth, const MoveValue prev_eval, Stack* ss)
 {
 	Score alpha = -VALUE_INFINITE;
 	Score beta = VALUE_INFINITE;
@@ -399,17 +413,17 @@ MoveValue Searcher::ASearch(const Depth depth, const bool is_max, const MoveValu
 	MoveValue result;
 
 	// Start search with full sized window
-	if (depth == 1) result = this->ABSearch<ROOT>(1, -VALUE_INFINITE, VALUE_INFINITE, is_max,ss);
+	if (depth == 1) result = this->ABSearch<ROOT>(1, -VALUE_INFINITE, VALUE_INFINITE, ss);
 	else {
 		// Use previous evaluation as a starting point and search with a smaller window
 		alpha = prev_eval.second - 100;
 		beta = prev_eval.second + 100;
-		result = this->ABSearch<ROOT>(depth, alpha, beta, is_max, ss);
+		result = this->ABSearch<ROOT>(depth, alpha, beta, ss);
 	}
 
 	// In case the result is outside the bounds we have to do a research
 	if (result.second <= alpha || result.second >= beta)
-		return this->ABSearch<ROOT>(depth, -VALUE_INFINITE, VALUE_INFINITE, is_max, ss);
+		return this->ABSearch<ROOT>(depth, -VALUE_INFINITE, VALUE_INFINITE, ss);
 
 	return result;
 }
@@ -447,7 +461,7 @@ void Searcher::IterativeDeepening()
 	{
 		this->seldepth = 0;
 
-		const MoveValue result = this->ASearch(depth, true, final_result, ss);
+		const MoveValue result = this->ASearch(depth, final_result, ss);
 		if (this->exit_early()) break;
 
 		final_result = result;
@@ -546,7 +560,6 @@ void Searcher::reset()
 }
 
 // Transposition Table functions
-
 Score score_to_tt(Score s, int ply)
 {
 	assert(s != VALUE_NONE);

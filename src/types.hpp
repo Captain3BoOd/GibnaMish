@@ -39,8 +39,6 @@ struct Limits
 
 inline constexpr int lmpM[4] = { 0, 8, 12, 24 };
 
-bool is_checkmate(const chess::Board&, const bool);
-bool is_Draw(const chess::Board&, const bool);
 int is_mate_score(const Score);
 bool NonPawnMaterial(const chess::Board&, const chess::Color);
 

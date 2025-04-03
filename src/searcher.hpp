@@ -74,9 +74,9 @@ private:
 	std::string get_pv();
 	long long elapsed();
 	bool exit_early();
-	MoveValue ASearch(const Depth, const bool, const MoveValue, Stack* ss);
-	template <NodeType> MoveValue ABSearch(Depth, Score, Score, const bool, Stack* ss);
-	template <NodeType> MoveValue QSearch(Score, Score, const bool, Stack* ss);
+	MoveValue ASearch(const Depth, const MoveValue, Stack* ss);
+	template <NodeType> MoveValue ABSearch(Depth, Score, Score, Stack* ss);
+	template <NodeType> MoveValue QSearch(Score, Score, Stack* ss);
 };
 
 #endif // !_SEARCHER_HPP_
