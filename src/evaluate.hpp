@@ -18,7 +18,6 @@ private:
 	using PieceType = chess::PieceType;
 	using Color = chess::Color;
 
-	static Score ForceKingToCenter(const chess::Board&, const chess::Color);
 	static MG_EG Calc_adjustment(const chess::Board&);
 };
 

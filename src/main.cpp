@@ -8,7 +8,6 @@ ThreadPool Threads;
 
 int main(void)
 {
-	piecesbouns::init_pieces_bouns();
 	init_reductions();
 
 	UCI Engine;
