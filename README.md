@@ -8,7 +8,7 @@
 
 
 # 👀 Project Overview
-Welcome to GibnaMish Chess Engine in C++ project! This project aims to provide a robust and feature-rich chess engine, built entirely from scratch in C++ and [chess-library](https://github.com/Disservin/chess-library). Whether you're looking to explore the internals of chess engines, this engine is a powerful tool designed with flexibility and extensibility in mind.
+Welcome to GibnaMish Chess Engine in C++ project! This project aims to provide a robust and feature-rich chess engine, built entirely from scratch in C++ and [chess-library](https://github.com/Disservin/chess-library) 'chess.hpp file' with some modifications of my own. Whether you're looking to explore the internals of chess engines, this engine is a powerful tool designed with flexibility and extensibility in mind.
 
 
 

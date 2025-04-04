@@ -59,7 +59,7 @@ void UCI::Response(const std::string& message)
 			this->Process_Set_Options_Command(message);
 
 		else if (tokens[0] == "eval")
-			std::cout << convertScore(Evaluate::evaluate(this->Board)) << std::endl;
+			std::cout << convertScore(evaluate(this->Board)) << std::endl;
 
 		else if (tokens[0] == "d" || tokens[0] == "draw")
 		{

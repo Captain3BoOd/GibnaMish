@@ -13,7 +13,7 @@
 #include "transpositiontable.hpp"
 
 #define CHESS_NO_EXCEPTIONS
-#include "chesslib/chess.hpp"
+#include "chess.hpp"
 #undef CHESS_NO_EXCEPTIONS
 
 inline constexpr int mvvlvaArray[8][8] = {

@@ -59,6 +59,9 @@ VERSION: 0.6.68
 
 #include <ostream>
 
+// GibnaMish code
+#include "piecesbouns.hpp"
+
 namespace chess {
 
 class Color {
@@ -1695,6 +1698,11 @@ class Board {
     using U64 = std::uint64_t;
 
    public:
+    // GibnaMish code
+    int psqt_mg_ = 0;
+    int psqt_eg_ = 0;
+
+
     class CastlingRights {
        public:
         enum class Side : uint8_t { KING_SIDE, QUEEN_SIDE };
@@ -2764,6 +2772,16 @@ class Board {
         pieces_bb_[type].set(index);
         occ_bb_[color].set(index);
         board_[index] = piece;
+
+        // GibnaMish code
+        if (piece > Piece::WHITEKING) {
+            psqt_mg_ -= pieceSquareScore[MG][piece % 6][sq.index()];
+            psqt_eg_ -= pieceSquareScore[EG][piece % 6][sq.index()];
+        }
+        else {
+            psqt_mg_ += pieceSquareScore[MG][piece % 6][sq.index() ^ 56];
+            psqt_eg_ += pieceSquareScore[EG][piece % 6][sq.index() ^ 56];
+        }
     }
 
     virtual void removePiece(Piece piece, Square sq) {
@@ -2780,6 +2798,16 @@ class Board {
         pieces_bb_[type].clear(index);
         occ_bb_[color].clear(index);
         board_[index] = Piece::NONE;
+
+        // GibnaMish code
+        if (piece > Piece::WHITEKING) {
+            psqt_mg_ += pieceSquareScore[MG][piece % 6][sq.index()];
+            psqt_eg_ += pieceSquareScore[EG][piece % 6][sq.index()];
+        }
+        else {
+            psqt_mg_ -= pieceSquareScore[MG][piece % 6][sq.index() ^ 56];
+            psqt_eg_ -= pieceSquareScore[EG][piece % 6][sq.index() ^ 56];
+        }
     }
 
     std::vector<State> prev_states_;
@@ -2801,6 +2829,9 @@ class Board {
     /// @brief [Internal Usage]
     /// @param fen
     void setFenInternal(std::string_view fen) {
+        psqt_mg_ = 0;
+        psqt_eg_ = 0;
+
         original_fen_ = fen;
 
         occ_bb_.fill(0ULL);

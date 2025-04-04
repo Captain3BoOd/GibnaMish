@@ -3,7 +3,7 @@
 #define _SEE_HPP_
 
 #define CHESS_NO_EXCEPTIONS
-#include "chesslib/chess.hpp"
+#include "chess.hpp"
 #undef CHESS_NO_EXCEPTIONS
 
 #include "piecesbouns.hpp"
@@ -53,12 +53,12 @@ namespace see
 	{
 		Square to_sq = move.to();
 		PieceType victim = board.at<PieceType>(to_sq);
-		int swap = piecesbouns::PicesValuesClassical[victim] - threshold;
+		int swap = PicesValuesClassical[victim] - threshold;
 		if (swap < 0) return false;
 
 		Square from_sq = move.from();
 		PieceType attacker = board.at<PieceType>(from_sq);
-		swap -= piecesbouns::PicesValuesClassical[attacker];
+		swap -= PicesValuesClassical[attacker];
 		if (swap >= 0) return true;
 
 		Bitboard occ = (board.all() ^ (1ULL << from_sq.index())) | (1ULL << to_sq.index());
@@ -87,7 +87,7 @@ namespace see
 					break;
 			}
 			sT = ~sT;
-			if ((swap = -swap - 1 - piecesbouns::PicesValues[0][pt]) >= 0)
+			if ((swap = -swap - 1 - PicesValues[0][pt]) >= 0)
 			{
 				if (pt == chess::KING && (attackers & board.us(sT))) sT = ~sT;
 				break;

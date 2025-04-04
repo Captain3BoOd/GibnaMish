@@ -43,7 +43,7 @@ MoveValue Searcher::ABSearch(Depth depth, Score alpha, Score beta, Stack* ss)
 	const bool in_check = this->Board.inCheck();
 	const Color color = this->Board.sideToMove();
 
-	if (ss->ply > MAX_PLY - 1) return { Move::NO_MOVE, (!in_check? Evaluate::evaluate(this->Board) : 0) };
+	if (ss->ply > MAX_PLY - 1) return { Move::NO_MOVE, (!in_check? evaluate(this->Board) : 0) };
 	this->pv_length[ss->ply] = ss->ply;
 
 	constexpr bool PvNode = node != NONPV;
@@ -105,7 +105,7 @@ MoveValue Searcher::ABSearch(Depth depth, Score alpha, Score beta, Stack* ss)
 		ss->eval = VALUE_NONE;
 		goto startmoves;
 	}
-	ss->eval = tt_hit ? ttEval : Evaluate::evaluate(this->Board);
+	ss->eval = tt_hit ? ttEval : evaluate(this->Board);
 
 	// improving boolean
 	improving = (ss - 2)->eval != VALUE_NONE && ss->eval > (ss - 2)->eval;
@@ -128,7 +128,7 @@ MoveValue Searcher::ABSearch(Depth depth, Score alpha, Score beta, Stack* ss)
 
 	// Start Null Move Pruning
 	if (
-		NonPawnMaterial(this->Board, this->Board.sideToMove())
+		this->Board.hasNonPawnMaterial(this->Board.sideToMove())
 		&& depth >= 3
 		&& excluded_move == Move::NO_MOVE
 		&& (ss - 1)->currentmove != Move::NULL_MOVE
@@ -305,7 +305,7 @@ startmoves:
 template <Searcher::NodeType node>
 MoveValue Searcher::QSearch(Score alpha, Score beta, Stack* ss)
 {
-	if (ss->ply > MAX_PLY - 1) return { Move::NO_MOVE, Evaluate::evaluate(this->Board) };
+	if (ss->ply > MAX_PLY - 1) return { Move::NO_MOVE, evaluate(this->Board) };
 	if (this->exit_early()) return { Move::NO_MOVE, 0 };
 
 	constexpr bool PvNode = node == PV;
@@ -340,7 +340,7 @@ MoveValue Searcher::QSearch(Score alpha, Score beta, Stack* ss)
 	}
 	// End Transposition Table
 
-	Score Final_Score = Evaluate::evaluate(this->Board);
+	Score Final_Score = evaluate(this->Board);
 	if (Final_Score >= beta) return { Move::NO_MOVE, Final_Score };
 	if (Final_Score > alpha) alpha = Final_Score;
 
@@ -360,9 +360,9 @@ MoveValue Searcher::QSearch(Score alpha, Score beta, Stack* ss)
 			if (
 				captured_piece != chess::PieceType::NONE
 				&& !in_check
-				&& Final_Score + 400 + piecesbouns::PicesValues[int(piecesbouns::PHASE::EG)][captured_piece] < alpha
+				&& Final_Score + 400 + PicesValues[EG][captured_piece] < alpha
 				&& move.typeOf() != Move::PROMOTION
-				&& NonPawnMaterial(this->Board, this->Board.sideToMove())
+				&& this->Board.hasNonPawnMaterial(this->Board.sideToMove())
 				) continue;
 
 			// see based capture pruning

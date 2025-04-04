@@ -2,15 +2,10 @@
 #ifndef _GLOBAL_HPP_
 #define _GLOBAL_HPP_
 
-#define CHESS_NO_EXCEPTIONS
-#include "chesslib/chess.hpp"
-#undef CHESS_NO_EXCEPTIONS
+#include <cstdint>
 
 using Score = int32_t;
 using Depth = int32_t;
-using MoveValue = std::pair<chess::Move, Score>;
-using Movelist = chess::Movelist;
-using Move = chess::Move;
 
 enum : Score
 {
@@ -40,6 +35,5 @@ struct Limits
 inline constexpr int lmpM[4] = { 0, 8, 12, 24 };
 
 int is_mate_score(const Score);
-bool NonPawnMaterial(const chess::Board&, const chess::Color);
 
 #endif // !_GLOBAL_HPP_

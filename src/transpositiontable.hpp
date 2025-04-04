@@ -5,11 +5,12 @@
 #include <vector>
 
 #define CHESS_NO_EXCEPTIONS
-#include "chesslib/chess.hpp"
+#include "chess.hpp"
 #undef CHESS_NO_EXCEPTIONS
 
 #include "types.hpp"
 
+using Move = chess::Move;
 using Age = uint32_t;
 
 enum class TTNodeType: uint8_t
