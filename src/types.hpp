@@ -3,9 +3,12 @@
 #define _GLOBAL_HPP_
 
 #include <cstdint>
+#include <corecrt.h>
 
 using Score = int32_t;
 using Depth = int32_t;
+
+inline constexpr int lmpM[4] = { 0, 8, 12, 24 };
 
 enum : Score
 {
@@ -31,9 +34,5 @@ struct Limits
 	Depth depth = MAX_PLY - 1;
 	bool infinite = false;
 };
-
-inline constexpr int lmpM[4] = { 0, 8, 12, 24 };
-
-int is_mate_score(const Score);
 
 #endif // !_GLOBAL_HPP_

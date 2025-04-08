@@ -12,8 +12,8 @@
 extern TranspositionTable tt;
 extern ThreadPool Threads;
 
-[[nodiscard]] Score score_to_tt(Score, int);
 [[nodiscard]] Score score_from_tt(Score, int);
+[[nodiscard]] Score score_to_tt(Score, int);
 [[nodiscard]] Score mateIn(int);
 [[nodiscard]] Score matedIn(int);
 
@@ -485,17 +485,15 @@ void Searcher::IterativeDeepening()
 
 		if (this->id == 0 && !this->silent)
 		{
-			const int mate_score = is_mate_score(result.second);
-			const std::string score_info = " score " + (mate_score ? "mate " + std::to_string(mate_score) : "cp " + std::to_string(result.second));
-			const auto t2 = TimePoint::now();
-			const int64_t ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-
 			{
 				std::stringstream ss;
 
+				const auto t2 = TimePoint::now();
+				const int64_t ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+
 				ss << "info depth " << signed(depth)
 				<< " seldepth " << signed(this->seldepth)
-				<< score_info
+				<< " score " << convertScore(result.second)
 				<< " nodes " << Threads.getNodes()
 				<< " nps " << signed((Threads.getNodes() / (ms + 1)) * 1000)
 				<< " hashfull " << signed(tt.hashfull())
@@ -520,8 +518,6 @@ void Searcher::IterativeDeepening()
 		// End Little Check Moves
 
 		const std::string move = chess::uci::moveToUci(final_result.first);
-		const int mate_score = is_mate_score(final_result.second);
-
 		std::cout << "bestmove " << move << std::endl;
 	}
 
@@ -603,6 +599,20 @@ Score mateIn(int ply)
 Score matedIn(int ply)
 {
 	return (ply - VALUE_MATE);
+}
+
+std::string convertScore(Score score)
+{
+	static constexpr int NormalizeToPawnValue = 131;
+
+	if (std::abs(score) <= 4) score = 0;
+
+	if (score >= VALUE_MATE_IN_PLY)
+		return "mate " + std::to_string(((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1));
+	else if (score <= VALUE_MATED_IN_PLY)
+		return "mate " + std::to_string(-((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1));
+	else
+		return "cp " + std::to_string(score * 100 / NormalizeToPawnValue);
 }
 
 Killers::Killers():

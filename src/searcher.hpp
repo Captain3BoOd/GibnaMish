@@ -83,4 +83,6 @@ private:
 	template <NodeType> MoveValue QSearch(Score, Score, Stack* ss);
 };
 
+[[nodiscard]] std::string convertScore(Score);
+
 #endif // !_SEARCHER_HPP_
