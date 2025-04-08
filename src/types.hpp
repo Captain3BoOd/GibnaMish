@@ -3,7 +3,7 @@
 #define _GLOBAL_HPP_
 
 #include <cstdint>
-#include <corecrt.h>
+#include <time.h>
 
 using Score = int32_t;
 using Depth = int32_t;
