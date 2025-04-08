@@ -126,6 +126,11 @@ MoveValue Searcher::ABSearch(Depth depth, Score alpha, Score beta, Stack* ss)
 		return this->QSearch<NONPV>(alpha, beta, ss);
 	// End Razoring
 
+	// Start Reverse futility pruning
+	if (std::abs(beta) < VALUE_TB_WIN_IN_MAX_PLY)
+		if (depth < 7 && ss->eval - 64 * depth + 71 * improving >= beta) return { Move::NO_MOVE, beta};
+	// End Reverse futility pruning
+
 	// Start Null Move Pruning
 	if (
 		this->Board.hasNonPawnMaterial(this->Board.sideToMove())
@@ -175,17 +180,29 @@ startmoves:
 		this->nodes++;
 		int extension = 0;
 
-		// Start Late Move Pruning/Movecount Pruning
-		if (
-			depth <= 3
-			&& !PvNode
-			&& !in_check
-			&& madeMoves > lmpM[depth]
-			&& !(this->Board.isAttacked(this->Board.kingSq(!this->Board.sideToMove()), this->Board.sideToMove()))
-			&& !is_capture
-			&& move.typeOf() != Move::PROMOTION
-		) continue;
-		// End Late Move Pruning/Movecount Pruning
+		// Start Various pruning techniques
+		if (!RootNode && Final_Score > VALUE_TB_LOSS_IN_MAX_PLY) {
+			if (is_capture) {
+				// SEE pruning
+				if (depth < 6
+					&& !see::see(this->Board, move, -(depth * 92)))
+					continue;
+			} else {
+				// late move pruning/movecount pruning
+				if (!in_check
+					&& !PvNode
+					&& move.typeOf() != Move::PROMOTION
+					&& depth <= 5
+					&& quiet_count > (4 + depth * depth))
+
+					continue;
+				// SEE pruning
+				if (depth < 7
+					&& !see::see(this->Board, move, -(depth * 93)))
+					continue;
+			}
+		}
+		// End Various pruning techniques
 
 		// Start Singular extensions
 		if (
